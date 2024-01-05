@@ -1,14 +1,12 @@
 # Carousell Data Scraper and Cleaning
 This script allows you to scrape data from Carousell, a popular online marketplace, and perform data cleaning on the scraped data. The scraping is done using the Selenium library, which automates web browser interaction. The cleaned data is then analyzed and visualized using the Pandas and Plotly libraries.
 
-## Scrapping Carousell Data
-### Script Explanation:
-#### Setting Up Selenium and Navigating to the URL
-
-The script starts by importing the necessary libraries and setting up Selenium with the Chrome WebDriver.
-The given URL is the Carousell collectibles search page.
+## Part 1: Scraping Carousell Data
+### 1.1 Setting up Selenium and Navigating to the URL
+This section imports the necessary libraries and sets up the Selenium WebDriver for automated web browser interaction.
+It navigates to the Carousell collectibles search page.
 ```python
-Copy
+Copy code
 import csv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -24,13 +22,13 @@ driver = webdriver.Chrome()  # You may need to adjust the path if using a differ
 driver.get(url)
 ```
 
-#### Defining Functions for Data Extraction
+### 1.2 Defining Function to Extract Listing Information
+This section defines a function extract_listing_info to extract information (title, price, date, and condition) from each listing on the page.
 
-The script defines a function extract_listing_info to extract information (title, price, date, and condition) from each listing on the page.
 ```python
-Copy
+python
+Copy code
 def extract_listing_info(listing):
-    # Extracting title, price, date, and condition information
     title_element = listing.find_element(By.CSS_SELECTOR, "p.D_oW.D_nU.D_oX.D_pb.D_pf.D_pi.D_pk.D_pg.D_po")
     price_element = listing.find_element(By.CSS_SELECTOR, "p.D_oW.D_nU.D_oX.D_pb.D_pe.D_pi.D_pl.D_pn")
     date_element = listing.find_element(By.CSS_SELECTOR, "p.D_oW.D_nS.D_oX.D_pb.D_pe.D_pi.D_pk.D_qw.D_pp")
@@ -98,11 +96,9 @@ driver.quit()
 
 print(f"Data has been saved to`carousell_data.csv`.")
 ```
-## Data Cleaning
-### Script Explanation:
-#### Loading the Scraped Data
-
-The script starts by importing the necessary libraries and loading the scraped data from the CSV file into a Pandas DataFrame.
+## Part 2: Cleaning Carousell Data
+### 2.1 Importing Libraries and Reading CSV Data
+This section imports Pandas and reads the previously scraped Carousell data from the CSV file.
 ```python
 Copy
 import pandas as pd
@@ -110,35 +106,93 @@ import pandas as pd
 # Load the scraped data from the CSV file
 df = pd.read_csv("carousell_data.csv")
 ```
-#### Cleaning the Data
-
-The script performs data cleaning operations on the loaded DataFrame, such as removing duplicates, handling missing values, and converting data types if necessary.
+### 2.2 Converting 'Date' Column to Datetime
+This section defines a function convert_to_datetime to convert relative date values to datetime objects.
 ```python
-Copy
-# Remove duplicate rows
-df.drop_duplicates(inplace=True)
+Copy code
+from datetime import datetime, timedelta
 
-# Handle missing values
-df.dropna(subset=["Title", "Price", "Date", "Condition"], inplace=True)
+# Assuming df['Date'] contains strings like '16 minutes ago', '1 day ago', etc.
+# Convert to datetime
+def convert_to_datetime(value):
+    if pd.isna(value):
+        return pd.NaT
+    elif 'minute' in value:
+        converted_date = datetime.now() - timedelta(minutes=int(value.split()[0]))
+        print(f"{value} -> {converted_date}")
+        return converted_date
+    elif 'hour' in value:
+        converted_date = datetime.now() - timedelta(hours=int(value.split()[0]))
+        print(f"{value} -> {converted_date}")
+        return converted_date
+    elif 'day' in value:
+        converted_date = datetime.now() - timedelta(days=int(value.split()[0]))
+        print(f"{value} -> {converted_date}")
+        return converted_date
+    elif 'month' in value:
+        converted_date = datetime.now() - timedelta(days=30 * int(value.split()[0]))
+        print(f"{value} -> {converted_date}")
+        return converted_date
+    elif 'year' in value:
+        converted_date = datetime.now() - timedelta(days=365 * int(value.split()[0]))
+        print(f"{value} -> {converted_date}")
+        return converted_date
+```
+### 2.3 Applying Date Conversion and Checking Frequency
+This section applies the conversion function to the 'Date' column and checks the frequency of each date.
+```python
+Copy code
+# Apply the conversion function to the 'Date' column
+df['Date'] = df['Date'].apply(convert_to_datetime)
 
-# Convert data types if necessary
-df["Price"] = df["Price"].str.replace("$", "").astype(float)
-df["Date"] = pd.to_datetime(df["Date"])
+# Check the frequency
+frequency = df['Date'].value_counts()
+print(frequency)
 ```
 
-#### Analyzing and Visualizing the Cleaned Data
-
-The script provides some examples of analyzing and visualizing the cleaned data using the Pandas and Plotly libraries.
+###2.4 Visualizing Time Range Frequency
+This section uses Plotly Express to create a bar chart visualizing the frequency of time ranges.
 ```python
-Copy
-# Example: Calculate average price by condition
-avg_price_by_condition = df.groupby("Condition")["Price"].mean()
-print(avg_price_by_condition)
-
-# Example: Create a bar chart of average price by condition
+Copy code
+import pandas as pd
 import plotly.express as px
+from datetime import datetime
 
-fig = px.bar(df, x="Condition", y="Price", barmode="group")
+# Assuming df['Date'] contains datetime values
+# Convert 'Date' column to datetime format
+df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+
+# Replace NaT values with a default date (e.g., the maximum date in the DataFrame)
+df['Date'] = df['Date'].fillna(df['Date'].max())
+
+# Define bins for the time ranges
+bins = [0, 6, 12, 18, 24, 30, 36, 42, 48, float('inf')]
+labels = ['1-6 months', '7-12 months', '13-18 months', '19-24 months', '25-30 months', '31-36 months', '37-42 months',
+          '43-48 months', '48+ months']
+
+# Calculate the time difference in months
+df['Time Difference'] = ((datetime.now() - df['Date']).dt.days / 30).astype(int)
+
+# Create a new column 'Time Range' to store the categorized values
+df['Time Range'] = pd.cut(df['Time Difference'], bins=bins, labels=labels, right=False)
+
+# Calculate the frequency of each time range
+frequency = df['Time Range'].value_counts().sort_index()
+
+# Convert the frequency series to a dictionary
+frequency_dict = frequency.to_dict()
+
+# Create a DataFrame from the dictionary
+df_plotly = pd.DataFrame(list(frequency_dict.items()), columns=['Time Range', 'Frequency'])
+
+# Create a bar chart using Plotly Express
+fig = px.bar(df_plotly, x='Time Range', y='Frequency', text='Frequency', title='Time Range Frequency',
+             labels={'Frequency': 'Frequency Count', 'Time Range': 'Time Range'})
+
+# Customize the layout to show values above the bars
+fig.update_traces(textposition='outside', texttemplate='%{text}', textfont_size=12)
+
+# Show the plot
 fig.show()
 ```
 
@@ -151,3 +205,5 @@ Copy
 cleaned_csv_file_path = "cleaned_carousell_data.csv"
 df.to_csv(cleaned_csv_file_path, index=False)
 ```
+
+## Feel free to customize the script to your specific needs! Happy scraping!
