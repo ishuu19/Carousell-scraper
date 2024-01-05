@@ -150,7 +150,7 @@ frequency = df['Date'].value_counts()
 print(frequency)
 ```
 
-###2.4 Visualizing Time Range Frequency
+### 2.4 Visualizing Time Range Frequency
 This section uses Plotly Express to create a bar chart visualizing the frequency of time ranges.
 ```python
 Copy code
