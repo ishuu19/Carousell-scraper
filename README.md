@@ -21,7 +21,7 @@
    driver = webdriver.Chrome()  # You may need to adjust the path if using a different WebDriver
 
    # Navigate to the URL
-   driver.get(url)
+   driver.get(url) ```
 #### 2. Defining Functions for Data Extraction:
    - The script defines a function `extract_listing_info` to extract information (title, price, date, and condition) from each listing on the page.
 
@@ -38,7 +38,7 @@
        date = date_element.text
        condition = condition_element.text
 
-       return {"Title": title, "Price": price, "Date": date, "Condition": condition}
+       return {"Title": title, "Price": price, "Date": date, "Condition": condition}```
 #### 3. Clicking "Show more results" and Extracting Initial Listings:
    - The script defines a function `click_show_more` to click the "Show more results" button.
    - It waits for the page to load and extracts information from the initial set of listings.
@@ -61,7 +61,7 @@
    all_listings = []
    listings = driver.find_elements(By.CLASS_NAME, "D_qe")
    for listing in listings:
-       all_listings.append(extract_listing_info(listing))
+       all_listings.append(extract_listing_info(listing))```
 #### 4. Clicking "Show more results" Until Unavailable and Saving to CSV:
    - The script clicks "Show more results" until the button is no longer available.
    - It saves the scraped data to a CSV file.
@@ -87,7 +87,7 @@
    # Close the browser
    driver.quit()
 
-   print(f"Data has been saved to {csv_file_path}")
+   print(f"Data has been saved to {csv_file_path}")```
 ## Cleaning Carousell Data
 
 ### Script Explanation:
@@ -99,7 +99,7 @@
    ```python
    import pandas as pd
    df = pd.read_csv("carousell_data.csv")
-   len(df)
+   len(df)```
 #### 2. Converting 'Date' Column to Datetime:
    - The script defines a function `convert_to_datetime` to convert relative date values (e.g., '16 minutes ago', '1 day ago') to datetime objects.
 
@@ -130,7 +130,7 @@
        elif 'year' in value:
            converted_date = datetime.now() - timedelta(days=365 * int(value.split()[0]))
            print(f"{value} -> {converted_date}")
-           return converted_date
+           return converted_date```
 #### 3. Applying Date Conversion and Checking Frequency:
    - The script applies the conversion function to the 'Date' column and checks the frequency of each date.
 
@@ -140,7 +140,7 @@
 
    # Check the frequency
    frequency = df['Date'].value_counts()
-   print(frequency)
+   print(frequency)```
 #### 4. Visualizing Time Range Frequency:
    - The script uses Plotly Express to create a bar chart visualizing the frequency of time ranges.
 
@@ -184,5 +184,5 @@
    fig.update_traces(textposition='outside', texttemplate='%{text}', textfont_size=12)
 
    # Show the plot
-   fig.show()
+   fig.show()```
 Feel free to customize the script to your specific needs! Happy scraping!
